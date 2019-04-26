@@ -1,0 +1,282 @@
+[
+  {
+    "heading": "General",
+    "items": [
+      {
+        "width": 88,
+        "height": 120,
+        "fillColor": "rgb(15, 157, 88)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "START",
+        "heading": "Start",
+        "ports": [
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          }
+        ]
+      },
+      {
+        "width": 88,
+        "height": 120,
+        "fillColor": "rgb(208, 2, 27)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "END",
+        "heading": "End",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "in",
+            "text": "in"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "heading": "Hardware",
+    "items": [
+      {
+        "width": 180,
+        "height": 120,
+        "fillColor": "rgb(63, 114, 175)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "WiFi Switch",
+        "heading": "WiFi Switch",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "in",
+            "text": "in"
+          },
+          {
+            "mode": "in",
+            "name": "on",
+            "text": "on"
+          },
+          {
+            "mode": "in",
+            "name": "off",
+            "text": "off"
+          },
+          {
+            "mode": "in",
+            "name": "toggle",
+            "text": "toggle"
+          },
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          },
+          {
+            "mode": "out",
+            "name": "on",
+            "text": "on"
+          },
+          {
+            "mode": "out",
+            "name": "off",
+            "text": "off"
+          },
+          {
+            "mode": "out",
+            "name": "error",
+            "text": "error"
+          }
+        ]
+      },
+      {
+        "width": 180,
+        "height": 120,
+        "fillColor": "rgb(63, 114, 175)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "Cellular Switch",
+        "heading": "Cellular Switch",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "in",
+            "text": "in"
+          },
+          {
+            "mode": "in",
+            "name": "on",
+            "text": "on"
+          },
+          {
+            "mode": "in",
+            "name": "off",
+            "text": "off"
+          },
+          {
+            "mode": "in",
+            "name": "toggle",
+            "text": "toggle"
+          },
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          },
+          {
+            "mode": "out",
+            "name": "on",
+            "text": "on"
+          },
+          {
+            "mode": "out",
+            "name": "off",
+            "text": "off"
+          },
+          {
+            "mode": "out",
+            "name": "error",
+            "text": "error"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "heading": "Error Handling",
+    "items": [
+      {
+        "width": 180,
+        "height": 120,
+        "fillColor": "rgb(63, 114, 175)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "Show Msg",
+        "heading": "Show Msg",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "in",
+            "text": "in"
+          },
+          {
+            "mode": "in",
+            "name": "info",
+            "text": "info"
+          },
+          {
+            "mode": "in",
+            "name": "warning",
+            "text": "warning"
+          },
+          {
+            "mode": "in",
+            "name": "error",
+            "text": "error"
+          },
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          },
+          {
+            "mode": "out",
+            "name": "info",
+            "text": "info"
+          },
+          {
+            "mode": "out",
+            "name": "warning",
+            "text": "warning"
+          },
+          {
+            "mode": "out",
+            "name": "error",
+            "text": "error"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "heading": "Utils",
+    "items": [
+      {
+        "width": 180,
+        "height": 120,
+        "fillColor": "rgb(63, 114, 175)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "Compress",
+        "heading": "Compress",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "file",
+            "text": "file"
+          },
+          {
+            "mode": "in",
+            "name": "text",
+            "text": "text"
+          },
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          },
+          {
+            "mode": "out",
+            "name": "file",
+            "text": "file"
+          },
+          {
+            "mode": "out",
+            "name": "text",
+            "text": "text"
+          },
+          {
+            "mode": "out",
+            "name": "error",
+            "text": "error"
+          }
+        ]
+      },
+      {
+        "width": 180,
+        "height": 120,
+        "fillColor": "rgb(63, 114, 175)",
+        "textColor": "rgb(255, 255, 255)",
+        "type": "Encrypt",
+        "heading": "Encrypt",
+        "ports": [
+          {
+            "mode": "in",
+            "name": "file",
+            "text": "file"
+          },
+          {
+            "mode": "in",
+            "name": "text",
+            "text": "text"
+          },
+          {
+            "mode": "out",
+            "name": "out",
+            "text": "out"
+          },
+          {
+            "mode": "out",
+            "name": "file",
+            "text": "file"
+          },
+          {
+            "mode": "out",
+            "name": "text",
+            "text": "text"
+          },
+          {
+            "mode": "out",
+            "name": "error",
+            "text": "error"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+.hostNode {
+	height: 75px;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 0;
+	flex-shrink: 0;
+	font-family: Helvetica, Arial, serif;
+	padding: 0 14px;
+	box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+	border-bottom: 1px solid #a7a7a7;
+	background-image: linear-gradient(#ebeceb, #cccccc);
+	z-index: 1;
+}
+
+.titleNode {
+	flex: none;
+	margin: 3px;
+	font-size: 14px;
+	font-weight: 400;
+	text-align: center;
+}
+
+.contentNode {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
