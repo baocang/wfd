@@ -1,4 +1,4 @@
-import React, {useCallback} from "react";
+import React, {useCallback, useReducer} from "react";
 
 import styles from "./AppShell.module.scss";
 
@@ -7,7 +7,17 @@ import AppToolBar from "./components/AppToolBar";
 import AppToolBox from "./components/AppToolBox";
 import DiagramCanvas from "./components/DiagramCanvas";
 
+import reducer from './reducers';
+
 import tools from './data/tools.json';
+
+export const initialState = {
+	scale: 1,
+	offsetX: 40,
+	offsetY: 40,
+	width: 1280,
+	height: 800,
+};
 
 const AppShell = () => {
 
@@ -21,6 +31,8 @@ const AppShell = () => {
 		alert('redo');
 	}, []);
 
+	const [state, dispatch] = useReducer(reducer, initialState);
+
 	return (
 		<div className={styles.hostNode}>
 			<AppHeader heading={heading}>
@@ -28,11 +40,12 @@ const AppShell = () => {
 			</AppHeader>
 			<div className={styles.contentNode}>
 				<AppToolBox data={tools}/>
-				<DiagramCanvas width={1280}
-							   height={800}
-							   offsetX={40}
-							   offsetY={40}
+				<DiagramCanvas width={state.width}
+							   height={state.height}
+							   offsetX={state.offsetX}
+							   offsetY={state.offsetY}
 							   scale={1}
+							   dispatch={dispatch}
 				/>
 			</div>
 		</div>

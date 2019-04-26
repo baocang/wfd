@@ -1,0 +1,1 @@
+export const ACTION_MOVE_CANVAS = "MOVE_CANVAS";
