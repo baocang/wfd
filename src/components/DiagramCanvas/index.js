@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React from "react";
 import styles from "./index.module.scss";
 
 const DiagramCanvas = (props) => {
