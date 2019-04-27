@@ -3,7 +3,7 @@ import React from "react";
 import styles from "./index.module.scss";
 
 import {
-	ACTION_MOVE_CANVAS,
+	ACTION_MOVE_CANVAS, ACTION_RECORD_MOVE_CANVAS,
 } from "../../constraints";
 
 import useMoveAble from "../../hooks/useMoveAble";
@@ -22,7 +22,12 @@ const DiagramCanvas = (props) => {
 	useMoveAble((event) => {
 			return event.altKey;
 		},
-		({movementX, movementY}) => {
+		({hasMoved, movementX, movementY}) => {
+			if (!hasMoved) {
+				dispatch({
+					type: ACTION_RECORD_MOVE_CANVAS,
+				});
+			}
 			dispatch({
 				type: ACTION_MOVE_CANVAS,
 				payload: {

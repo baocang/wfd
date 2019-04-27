@@ -10,6 +10,10 @@ import DiagramCanvas from "./components/DiagramCanvas";
 import reducer from './reducers';
 
 import tools from './data/tools.json';
+import {
+	ACTION_REDO,
+	ACTION_UNDO
+} from "./constraints";
 
 export const initialState = {
 	scale: 1,
@@ -23,15 +27,19 @@ const AppShell = () => {
 
 	const heading = 'Workflow Diagrams - Demo App';
 
+	const [state, dispatch] = useReducer(reducer, initialState);
+
 	const onUndo = useCallback(() => {
-		alert('undo');
+		dispatch({
+			type: ACTION_UNDO,
+		});
 	}, []);
 
 	const onRedo = useCallback(() => {
-		alert('redo');
+		dispatch({
+			type: ACTION_REDO,
+		});
 	}, []);
-
-	const [state, dispatch] = useReducer(reducer, initialState);
 
 	return (
 		<div className={styles.hostNode}>

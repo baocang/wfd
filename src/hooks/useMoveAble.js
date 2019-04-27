@@ -2,12 +2,15 @@ import {useEffect, useRef, useState} from "react";
 
 const useMoveAble = (evaluate, callback) => {
 
+	const hasMovedRef = useRef(false);
 	const prevMousePosRef = useRef(null);
 
 	const [allowMove, setAllowMove] = useState(false);
 
 	useEffect(() => {
 		const handleMouseDown = (event) => {
+			event.stopPropagation();
+
 			if (!prevMousePosRef.current) {
 				prevMousePosRef.current = {
 					x: event.clientX,
@@ -16,6 +19,7 @@ const useMoveAble = (evaluate, callback) => {
 			}
 			if (evaluate(event)) {
 				setAllowMove(true);
+				hasMovedRef.current = false;
 			}
 		};
 
@@ -28,7 +32,9 @@ const useMoveAble = (evaluate, callback) => {
 
 	useEffect(() => {
 		const handleMouseUp = (event) => {
+			event.stopPropagation();
 			setAllowMove(false);
+			hasMovedRef.current = false;
 		};
 
 		window.addEventListener('mouseup', handleMouseUp);
@@ -40,11 +46,16 @@ const useMoveAble = (evaluate, callback) => {
 
 	useEffect(() => {
 		const handleMouseMove = (event) => {
+			event.stopPropagation();
+
 			if (allowMove) {
-				callback({
-					movementX: event.clientX - prevMousePosRef.current.x,
-					movementY: event.clientY - prevMousePosRef.current.y
-				});
+				const hasMoved = hasMovedRef.current;
+				const movementX = event.clientX - prevMousePosRef.current.x;
+				const movementY = event.clientY - prevMousePosRef.current.y;
+
+				callback({hasMoved, movementX, movementY});
+
+				hasMovedRef.current = true;
 			}
 			prevMousePosRef.current = {
 				x: event.clientX,
