@@ -6,6 +6,8 @@ import {
 	ACTION_CREATE_MODULE,
 	ACTION_SELECT_MODULE,
 	ACTION_MOVE_MODULE,
+	ACTION_SELECT_PATH,
+	ACTION_SELECT_CONTROL_POINT,
 	ACTION_DESELECT_ALL,
 } from "../constraints";
 
@@ -157,6 +159,60 @@ const moveModule = (state, {
 	};
 };
 
+const selectPath = (state, {pathId}) => {
+	const {
+		pointIds
+	} = state.paths.byId[pathId];
+
+	const newState = {
+		...state,
+		paths: {
+			...state.paths,
+			byId: {
+				...state.paths.byId,
+				[pathId]: {
+					...state.paths.byId[pathId],
+					isSelected: true,
+				},
+			},
+			selectedIds: [pathId],
+		},
+		points: {
+			...state.points,
+			byId: {
+				...state.points.byId,
+			},
+			selectedIds: pointIds.slice(),
+		},
+	};
+
+	pointIds.forEach((id) => {
+		newState.points.byId[id] = {
+			...state.points.byId[id],
+			isSelected: true,
+		};
+	});
+
+	return newState;
+};
+
+const selectControlPoint = (state, {pointId}) => {
+	return {
+		...state,
+		points: {
+			...state.points,
+			byId: {
+				...state.points.byId,
+				[pointId]: {
+					...state.points.byId[pointId],
+					isSelected: true,
+				},
+			},
+			selectedIds: [pointId],
+		},
+	};
+};
+
 const deSelectAll = (state) => {
 	const newState = {
 		...state,
@@ -167,11 +223,41 @@ const deSelectAll = (state) => {
 			},
 			selectedIds: [],
 		},
+		paths: {
+			...state.paths,
+			byId: {
+				...state.paths.byId,
+			},
+			selectedIds: [],
+		},
+		points: {
+			...state.points,
+			byId: {
+				...state.points.byId,
+			},
+			selectedIds: [],
+		},
 	};
 
 	state.modules.selectedIds.forEach((id) => {
-		newState.modules.byId[id] = {...state.modules.byId[id]};
-		newState.modules.byId[id].isSelected = false;
+		newState.modules.byId[id] = {
+			...state.modules.byId[id],
+			isSelected: false,
+		};
+	});
+
+	state.paths.selectedIds.forEach((id) => {
+		newState.paths.byId[id] = {
+			...state.paths.byId[id],
+			isSelected: false,
+		};
+	});
+
+	state.points.selectedIds.forEach((id) => {
+		newState.points.byId[id] = {
+			...state.points.byId[id],
+			isSelected: false,
+		};
 	});
 
 	return newState;
@@ -195,6 +281,10 @@ const reducer = (state, action) => {
 			return selectModule(state, action.payload);
 		case ACTION_MOVE_MODULE:
 			return moveModule(state, action.payload);
+		case ACTION_SELECT_PATH:
+			return selectPath(state, action.payload);
+		case ACTION_SELECT_CONTROL_POINT:
+			return selectControlPoint(state, action.payload);
 		case ACTION_DESELECT_ALL:
 			return deSelectAll(state);
 		default:

@@ -19,6 +19,8 @@ import {
 	ACTION_CREATE_MODULE,
 	ACTION_SELECT_MODULE,
 	ACTION_MOVE_MODULE,
+	ACTION_SELECT_PATH,
+	ACTION_SELECT_CONTROL_POINT,
 	ACTION_DESELECT_ALL,
 } from "./constraints";
 
@@ -34,15 +36,64 @@ export const initialState = {
 		allIds: [],
 	},
 	paths: {
-		byId: {},
-		allIds: [],
+		byId: {
+			1: {
+				id: 1,
+				curvy: 80,
+				isActive: false,
+				isSelected: false,
+				pointIds: [
+					1,
+					2,
+					3,
+				],
+				sourcePortId: null,
+				targetPortId: null,
+			},
+		},
+		allIds: [
+			1,
+		],
 		activeIds: [],
 		selectedIds: [],
 		pathCurvy: 80,
 	},
 	points: {
-		byId: {},
-		allIds: [],
+		byId: {
+			1: {
+				id: 1,
+				pathId: 1,
+				x: 91,
+				y: 46.5,
+				isTarget: false,
+				isSource: true,
+				isActive: false,
+				isSelected: false,
+			},
+			2: {
+				id: 2,
+				pathId: 1,
+				x: 108,
+				y: 107,
+				isTarget: false,
+				isSource: false,
+			},
+			3: {
+				id: 3,
+				pathId: 1,
+				x: 128,
+				y: 169.5,
+				isTarget: true,
+				isSource: false,
+				isActive: false,
+				isSelected: false,
+			},
+		},
+		allIds: [
+			1,
+			2,
+			3,
+		],
 		activeIds: [],
 		selectedIds: [],
 	},
@@ -177,6 +228,67 @@ const AppShell = () => {
 		});
 	}, []);
 
+	const onConnectPathMouseDown = useCallback((event, {pathId}) => {
+		event.stopPropagation();
+		dispatch({
+			type: ACTION_SELECT_PATH,
+			payload: {
+				pathId,
+			},
+		});
+	}, []);
+
+	const onControlPointMouseDown = useCallback((event, {pointId}) => {
+		event.stopPropagation();
+		dispatch({
+			type: ACTION_SELECT_CONTROL_POINT,
+			payload: {
+				pointId,
+			},
+		});
+	}, []);
+
+	const pathMapper = useMemo(() => {
+		return (callback) => {
+			return state.paths.allIds.map((id, index) => callback(state.paths.byId[id], index));
+		};
+	}, [state]);
+
+	const pathPointMapper = useMemo(() => {
+		return (pathId, callback) => {
+			const {
+				[pathId]: {
+					pointIds
+				},
+			} = state.paths.byId;
+
+			return pointIds.map((id, index) => callback(state.points.byId[id], index));
+		};
+	}, [state]);
+
+	const pathControlPointMapper = useMemo(() => {
+		return (pathId, callback) => {
+			const {
+				[pathId]: {
+					pointIds
+				},
+			} = state.paths.byId;
+
+			let lastPointIdIndex = pointIds.length;
+			const lastPointId = pointIds[pointIds.length - 1];
+
+			const {
+				isTarget,
+			} = state.points.byId[lastPointId];
+
+			if (isTarget) {
+				lastPointIdIndex -= 1;
+			}
+
+			return pointIds.slice(1, lastPointIdIndex).map((id, index) => callback(state.points.byId[id], index));
+		};
+	}, [state]);
+
 	const moduleMapper = useMemo(() => {
 		return (callback) => {
 			return state.modules.allIds.map((id, index) => callback(state.modules.byId[id], index));
@@ -238,6 +350,9 @@ const AppShell = () => {
 					onItemDragStart={onToolItemDragStart}
 				/>
 				<DiagramCanvas
+					pathMapper={pathMapper}
+					pathPointMapper={pathPointMapper}
+					pathControlPointMapper={pathControlPointMapper}
 					moduleMapper={moduleMapper}
 					inputPortMapper={inputPortMapper}
 					outputPortMapper={outputPortMapper}
@@ -252,6 +367,8 @@ const AppShell = () => {
 					onMoveCanvas={onMoveCanvas}
 					onMoveModule={onMoveModule}
 					onSelectModule={onSelectModule}
+					onConnectPathMouseDown={onConnectPathMouseDown}
+					onControlPointMouseDown={onControlPointMouseDown}
 				/>
 			</div>
 		</div>
