@@ -5,23 +5,26 @@ import DiagramToolBoxGroup from "../AppToolBoxGroup";
 import DiagramToolBoxItem from "../AppToolBoxItem";
 
 const DiagramToolBox = (props) => {
+	const {
+		onItemDragStart,
+	} = props;
 
 	return (
 		<div className={styles.hostNode}>
 			<div className={styles.scrollNode}>
 				{
-					props.data.map((group, index) => {
+					props.data.map((group, groupIndex) => {
 						const {
 							heading,
 						} = group;
 
 						return (
 							<DiagramToolBoxGroup
-								key={index}
+								key={groupIndex}
 								heading={heading}
 							>
 								{
-									group.items.map((item, index) => {
+									group.items.map((item, itemIndex) => {
 										const {
 											heading,
 											fillColor,
@@ -30,10 +33,13 @@ const DiagramToolBox = (props) => {
 
 										return (
 											<DiagramToolBoxItem
-												key={index}
+												key={itemIndex}
+												index={itemIndex}
+												groupIndex={groupIndex}
 												heading={heading}
 												fillColor={fillColor}
 												textColor={textColor}
+												onDragStart={onItemDragStart}
 											/>
 										);
 									})

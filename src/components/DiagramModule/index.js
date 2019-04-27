@@ -11,6 +11,9 @@ const DiagramModule = (props) => {
 		offsetY,
 		offsetX,
 		fillColor,
+		moduleId,
+		inputPortMapper,
+		outputPortMapper,
 	} = props;
 
 	return (
@@ -32,10 +35,38 @@ const DiagramModule = (props) => {
 			</div>
 			<div className={styles.contentNode}>
 				<div className={styles.inputPorts}>
-					<DiagramModulePort mode={'in'} labelText={'In'}/>
+					{
+						inputPortMapper(moduleId, (item, index) => {
+							const {
+								text,
+							} = item;
+
+							return (
+								<DiagramModulePort
+									key={index}
+									mode={'in'}
+									text={text}
+								/>
+							);
+						})
+					}
 				</div>
 				<div className={styles.outputPorts}>
-					<DiagramModulePort mode={'out'} labelText={'Out'}/>
+					{
+						outputPortMapper(moduleId, (item, index) => {
+							const {
+								text,
+							} = item;
+
+							return (
+								<DiagramModulePort
+									key={index}
+									mode={'out'}
+									text={text}
+								/>
+							);
+						})
+					}
 				</div>
 			</div>
 		</div>

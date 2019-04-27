@@ -5,8 +5,8 @@ import styles from "./index.module.scss";
 const DiagramModulePort = (props) => {
 
 	const {
-		labelText,
 		mode,
+		text,
 	} = props;
 
 	return (
@@ -21,7 +21,7 @@ const DiagramModulePort = (props) => {
 			<span
 				className={styles.labelNode}
 			>
-				{labelText}
+				{text}
 			</span>
 		</div>
 	);

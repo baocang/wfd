@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback} from "react";
 
 import styles from "./index.module.scss";
 
@@ -18,6 +18,11 @@ const DiagramCanvas = (props) => {
 		offsetY,
 		scale,
 		dispatch,
+		onDrop,
+		canvasRef,
+		moduleMapper,
+		inputPortMapper,
+		outputPortMapper,
 	} = props;
 
 	useMoveAble((event) => {
@@ -38,6 +43,10 @@ const DiagramCanvas = (props) => {
 			});
 		});
 
+	const handleDragOver = useCallback((event) => {
+		event.preventDefault();
+	}, []);
+
 	const transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 	const layerStyle = {
 		width: width,
@@ -46,14 +55,39 @@ const DiagramCanvas = (props) => {
 	};
 
 	return (
-		<div className={styles.hostNode}>
+		<div className={styles.hostNode}
+			 ref={canvasRef}
+			 onDrop={onDrop}
+			 onDragOver={handleDragOver}
+		>
 			<svg className={styles.pathLayer} style={layerStyle}/>
 			<div className={styles.widgetLayer} style={layerStyle}>
-				<DiagramModule
-					offsetX={40}
-					offsetY={40}
-					heading={'Diagram Widget'}
-				/>
+				{
+					moduleMapper((item, index) => {
+						const {
+							id,
+							width,
+							offsetX,
+							offsetY,
+							heading,
+							fillColor,
+						} = item;
+
+						return (
+							<DiagramModule
+								key={index}
+								moduleId={id}
+								width={width}
+								offsetX={offsetX}
+								offsetY={offsetY}
+								heading={heading}
+								fillColor={fillColor}
+								inputPortMapper={inputPortMapper}
+								outputPortMapper={outputPortMapper}
+							/>
+						);
+					})
+				}
 			</div>
 		</div>
 	);
