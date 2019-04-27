@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useRef, useReducer} from "react";
+import React, {useCallback, useLayoutEffect, useMemo, useRef, useReducer} from "react";
 
 
 import styles from "./AppShell.module.scss";
@@ -12,9 +12,14 @@ import reducer from './reducers';
 
 import tools from './data/tools.json';
 import {
-	ACTION_REDO,
 	ACTION_UNDO,
-	ACTION_CREATE_WIDGET, ACTION_RECORD_STATE, ACTION_MOVE_CANVAS,
+	ACTION_REDO,
+	ACTION_MOVE_CANVAS,
+	ACTION_RECORD_STATE,
+	ACTION_CREATE_MODULE,
+	ACTION_SELECT_MODULE,
+	ACTION_MOVE_MODULE,
+	ACTION_DESELECT_ALL,
 } from "./constraints";
 
 export const initialState = {
@@ -138,7 +143,7 @@ const AppShell = () => {
 		});
 
 		dispatch({
-			type: ACTION_CREATE_WIDGET,
+			type: ACTION_CREATE_MODULE,
 			payload: {
 				config: config,
 				x: clientX - canvasX - offsetX - targetX,
@@ -146,6 +151,31 @@ const AppShell = () => {
 			},
 		});
 	}, [state]);
+
+	const onMoveModule = useCallback(({moduleId, hasMoved, movementX, movementY}) => {
+		if (!hasMoved) {
+			dispatch({
+				type: ACTION_RECORD_STATE,
+			});
+		}
+		dispatch({
+			type: ACTION_MOVE_MODULE,
+			payload: {
+				moduleId,
+				movementX,
+				movementY,
+			},
+		});
+	}, []);
+
+	const onSelectModule = useCallback((moduleId) => {
+		dispatch({
+			type: ACTION_SELECT_MODULE,
+			payload: {
+				moduleId,
+			},
+		});
+	}, []);
 
 	const moduleMapper = useMemo(() => {
 		return (callback) => {
@@ -177,6 +207,26 @@ const AppShell = () => {
 		};
 	}, [state]);
 
+	useLayoutEffect(() => {
+		const {current: canvas} = canvasRef;
+
+		if (canvas) {
+			const handleClick = (event) => {
+				if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
+					dispatch({
+						type: ACTION_DESELECT_ALL,
+					});
+				}
+			};
+
+			canvas.addEventListener('mousedown', handleClick);
+
+			return () => {
+				canvas.removeEventListener('mousedown', handleClick);
+			};
+		}
+	}, [canvasRef]);
+
 	return (
 		<div className={styles.hostNode}>
 			<AppHeader heading={heading}>
@@ -200,6 +250,8 @@ const AppShell = () => {
 					dispatch={dispatch}
 					onDrop={onCanvasDrop}
 					onMoveCanvas={onMoveCanvas}
+					onMoveModule={onMoveModule}
+					onSelectModule={onSelectModule}
 				/>
 			</div>
 		</div>

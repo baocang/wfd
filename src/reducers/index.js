@@ -3,7 +3,10 @@ import {
 	ACTION_REDO,
 	ACTION_MOVE_CANVAS,
 	ACTION_RECORD_STATE,
-	ACTION_CREATE_WIDGET,
+	ACTION_CREATE_MODULE,
+	ACTION_SELECT_MODULE,
+	ACTION_MOVE_MODULE,
+	ACTION_DESELECT_ALL,
 } from "../constraints";
 
 import {
@@ -93,7 +96,7 @@ const createWidget = (state, {
 					id: newModuleId,
 					type: type,
 					isActive: false,
-					isSelected: false,
+					isSelected: true,
 					width: width,
 					height: height,
 					radius: 10,
@@ -106,6 +109,7 @@ const createWidget = (state, {
 				}
 			},
 			allIds: state.modules.allIds.concat(newModuleId),
+			selectedIds: [newModuleId],
 		},
 		ports: {
 			...state.ports,
@@ -115,7 +119,66 @@ const createWidget = (state, {
 	};
 };
 
+const selectModule = (state, {moduleId}) => {
+	return {
+		...state,
+		modules: {
+			...state.modules,
+			byId: {
+				...state.modules.byId,
+				[moduleId]: {
+					...state.modules.byId[moduleId],
+					isSelected: true,
+				},
+			},
+			selectedIds: [moduleId],
+		},
+	};
+};
+
+const moveModule = (state, {
+	moduleId,
+	movementX,
+	movementY,
+}) => {
+	return {
+		...state,
+		modules: {
+			...state.modules,
+			byId: {
+				...state.modules.byId,
+				[moduleId]: {
+					...state.modules.byId[moduleId],
+					offsetX: state.modules.byId[moduleId].offsetX + movementX,
+					offsetY: state.modules.byId[moduleId].offsetY + movementY,
+				},
+			},
+		},
+	};
+};
+
+const deSelectAll = (state) => {
+	const newState = {
+		...state,
+		modules: {
+			...state.modules,
+			byId: {
+				...state.modules.byId,
+			},
+			selectedIds: [],
+		},
+	};
+
+	state.modules.selectedIds.forEach((id) => {
+		newState.modules.byId[id] = {...state.modules.byId[id]};
+		newState.modules.byId[id].isSelected = false;
+	});
+
+	return newState;
+};
+
 const reducer = (state, action) => {
+	console.log(action.type);
 	switch (action.type) {
 		case ACTION_UNDO:
 			return undo(state);
@@ -126,8 +189,14 @@ const reducer = (state, action) => {
 		case ACTION_RECORD_STATE:
 			undoStack.push(state);
 			return state;
-		case ACTION_CREATE_WIDGET:
+		case ACTION_CREATE_MODULE:
 			return createWidget(state, action.payload);
+		case ACTION_SELECT_MODULE:
+			return selectModule(state, action.payload);
+		case ACTION_MOVE_MODULE:
+			return moveModule(state, action.payload);
+		case ACTION_DESELECT_ALL:
+			return deSelectAll(state);
 		default:
 			return state;
 	}

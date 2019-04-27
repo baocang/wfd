@@ -1,7 +1,8 @@
-import React from "react";
+import React, {useCallback, useRef} from "react";
 import classNames from "classnames";
 import styles from "./index.module.scss";
 import DiagramModulePort from "../DiagramModulePort";
+import useMoveAble from "../../hooks/useMoveAble";
 
 const DiagramModule = (props) => {
 
@@ -11,15 +12,31 @@ const DiagramModule = (props) => {
 		offsetY,
 		offsetX,
 		fillColor,
+		isSelected,
 		moduleId,
 		inputPortMapper,
 		outputPortMapper,
+		onMoveModule,
+		onSelect,
 	} = props;
+
+	const moduleRef = useRef(null);
+
+	const handleSelect = useCallback((event) => {
+		event.stopPropagation();
+		onSelect(moduleId);
+	}, [moduleId, onSelect]);
+
+	useMoveAble(moduleRef, () => true, ({hasMoved, movementX, movementY}) => {
+		onMoveModule({moduleId, hasMoved, movementX, movementY});
+	});
 
 	return (
 		<div
+			ref={moduleRef}
 			className={classNames({
 				[styles.hostNode]: true,
+				[styles.selected]: isSelected,
 			})}
 			style={{
 				top: `${offsetY}px`,
@@ -27,6 +44,7 @@ const DiagramModule = (props) => {
 				backgroundColor: fillColor,
 				width: `${width}px`,
 			}}
+			onMouseDown={handleSelect}
 		>
 			<div
 				className={styles.headerNode}

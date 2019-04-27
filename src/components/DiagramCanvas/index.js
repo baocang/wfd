@@ -19,9 +19,9 @@ const DiagramCanvas = (props) => {
 		moduleMapper,
 		inputPortMapper,
 		outputPortMapper,
+		onMoveModule,
+		onSelectModule,
 	} = props;
-
-	useMoveAble((event) => event.altKey, onMoveCanvas);
 
 	const handleDragOver = useCallback((event) => {
 		event.preventDefault();
@@ -33,6 +33,8 @@ const DiagramCanvas = (props) => {
 		height: height,
 		transform: transform,
 	};
+
+	useMoveAble(canvasRef,(event) => event.altKey, onMoveCanvas);
 
 	return (
 		<div className={styles.hostNode}
@@ -51,6 +53,7 @@ const DiagramCanvas = (props) => {
 							offsetY,
 							heading,
 							fillColor,
+							isSelected,
 						} = item;
 
 						return (
@@ -60,10 +63,13 @@ const DiagramCanvas = (props) => {
 								width={width}
 								offsetX={offsetX}
 								offsetY={offsetY}
+								isSelected={isSelected}
 								heading={heading}
 								fillColor={fillColor}
 								inputPortMapper={inputPortMapper}
 								outputPortMapper={outputPortMapper}
+								onMoveModule={onMoveModule}
+								onSelect={onSelectModule}
 							/>
 						);
 					})

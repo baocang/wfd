@@ -1,36 +1,40 @@
-import {useEffect, useRef, useState} from "react";
+import {useLayoutEffect, useRef, useState} from "react";
 
-const useMoveAble = (evaluate, callback) => {
+const useMoveAble = (targetRef, evaluate, callback) => {
 
 	const hasMovedRef = useRef(false);
 	const prevMousePosRef = useRef(null);
 
 	const [allowMove, setAllowMove] = useState(false);
 
-	useEffect(() => {
-		const handleMouseDown = (event) => {
-			event.stopPropagation();
+	useLayoutEffect(() => {
+		const {current: target} = targetRef;
 
-			if (!prevMousePosRef.current) {
-				prevMousePosRef.current = {
-					x: event.clientX,
-					y: event.clientY,
-				};
-			}
-			if (evaluate(event)) {
-				setAllowMove(true);
-				hasMovedRef.current = false;
-			}
-		};
+		if (target) {
+			const handleMouseDown = (event) => {
+				// event.stopPropagation();
 
-		window.addEventListener('mousedown', handleMouseDown);
+				if (!prevMousePosRef.current) {
+					prevMousePosRef.current = {
+						x: event.clientX,
+						y: event.clientY,
+					};
+				}
+				if (evaluate(event)) {
+					setAllowMove(true);
+					hasMovedRef.current = false;
+				}
+			};
 
-		return () => {
-			window.removeEventListener('mousedown', handleMouseDown);
-		};
-	}, [evaluate]);
+			target.addEventListener('mousedown', handleMouseDown);
 
-	useEffect(() => {
+			return () => {
+				target.removeEventListener('mousedown', handleMouseDown);
+			};
+		}
+	}, [targetRef, evaluate]);
+
+	useLayoutEffect(() => {
 		const handleMouseUp = (event) => {
 			event.stopPropagation();
 			setAllowMove(false);
@@ -44,7 +48,7 @@ const useMoveAble = (evaluate, callback) => {
 		};
 	}, []);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const handleMouseMove = (event) => {
 			event.stopPropagation();
 
