@@ -2,7 +2,7 @@ import {
 	ACTION_UNDO,
 	ACTION_REDO,
 	ACTION_MOVE_CANVAS,
-	ACTION_RECORD_MOVE_CANVAS,
+	ACTION_RECORD_STATE,
 	ACTION_CREATE_WIDGET,
 } from "../constraints";
 
@@ -123,7 +123,7 @@ const reducer = (state, action) => {
 			return redo(state);
 		case ACTION_MOVE_CANVAS:
 			return moveCanvas(state, action.payload);
-		case ACTION_RECORD_MOVE_CANVAS:
+		case ACTION_RECORD_STATE:
 			undoStack.push(state);
 			return state;
 		case ACTION_CREATE_WIDGET:

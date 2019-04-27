@@ -2,10 +2,6 @@ import React, {useCallback} from "react";
 
 import styles from "./index.module.scss";
 
-import {
-	ACTION_MOVE_CANVAS, ACTION_RECORD_MOVE_CANVAS,
-} from "../../constraints";
-
 import useMoveAble from "../../hooks/useMoveAble";
 import DiagramModule from "../DiagramModule";
 
@@ -17,31 +13,15 @@ const DiagramCanvas = (props) => {
 		offsetX,
 		offsetY,
 		scale,
-		dispatch,
 		onDrop,
+		onMoveCanvas,
 		canvasRef,
 		moduleMapper,
 		inputPortMapper,
 		outputPortMapper,
 	} = props;
 
-	useMoveAble((event) => {
-			return event.altKey;
-		},
-		({hasMoved, movementX, movementY}) => {
-			if (!hasMoved) {
-				dispatch({
-					type: ACTION_RECORD_MOVE_CANVAS,
-				});
-			}
-			dispatch({
-				type: ACTION_MOVE_CANVAS,
-				payload: {
-					movementX,
-					movementY,
-				},
-			});
-		});
+	useMoveAble((event) => event.altKey, onMoveCanvas);
 
 	const handleDragOver = useCallback((event) => {
 		event.preventDefault();

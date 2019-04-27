@@ -14,7 +14,7 @@ import tools from './data/tools.json';
 import {
 	ACTION_REDO,
 	ACTION_UNDO,
-	ACTION_CREATE_WIDGET,
+	ACTION_CREATE_WIDGET, ACTION_RECORD_STATE, ACTION_MOVE_CANVAS,
 } from "./constraints";
 
 export const initialState = {
@@ -93,6 +93,21 @@ const AppShell = () => {
 		}));
 	}, []);
 
+	const onMoveCanvas = useCallback(({hasMoved, movementX, movementY}) => {
+		if (!hasMoved) {
+			dispatch({
+				type: ACTION_RECORD_STATE,
+			});
+		}
+		dispatch({
+			type: ACTION_MOVE_CANVAS,
+			payload: {
+				movementX,
+				movementY,
+			},
+		});
+	}, []);
+
 	const onCanvasDrop = useCallback((event) => {
 		const data = JSON.parse(event.dataTransfer.getData("data"));
 
@@ -117,6 +132,10 @@ const AppShell = () => {
 			x: canvasX,
 			y: canvasY,
 		}] = canvasRef.current.getClientRects();
+
+		dispatch({
+			type: ACTION_RECORD_STATE,
+		});
 
 		dispatch({
 			type: ACTION_CREATE_WIDGET,
@@ -180,6 +199,7 @@ const AppShell = () => {
 					scale={1}
 					dispatch={dispatch}
 					onDrop={onCanvasDrop}
+					onMoveCanvas={onMoveCanvas}
 				/>
 			</div>
 		</div>
