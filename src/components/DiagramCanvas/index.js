@@ -7,6 +7,7 @@ import {
 } from "../../constraints";
 
 import useMoveAble from "../../hooks/useMoveAble";
+import DiagramModule from "../DiagramModule";
 
 const DiagramCanvas = (props) => {
 
@@ -47,7 +48,13 @@ const DiagramCanvas = (props) => {
 	return (
 		<div className={styles.hostNode}>
 			<svg className={styles.pathLayer} style={layerStyle}/>
-			<div className={styles.widgetLayer} style={layerStyle}/>
+			<div className={styles.widgetLayer} style={layerStyle}>
+				<DiagramModule
+					offsetX={40}
+					offsetY={40}
+					heading={'Diagram Widget'}
+				/>
+			</div>
 		</div>
 	);
 

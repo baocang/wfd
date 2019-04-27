@@ -1,0 +1,55 @@
+.hostNode {
+	display: flex;
+	align-items: center;
+	height: 19px;
+	cursor: default;
+}
+
+.inputPort {
+	justify-content: flex-start;
+
+	&:before {
+		content: '';
+		display: block;
+		width: 5px;
+		height: 15px;
+		margin: 0 4px 0 0;
+		background-color: rgba(255, 255, 255, .26);
+	}
+
+	&:hover {
+		&:before {
+			margin-left: -2px;
+			border-left: 2px solid rgb(15, 157, 88);
+			background-color: rgba(255, 255, 255, .88);
+		}
+	}
+}
+
+.outputPort {
+	justify-content: flex-end;
+
+	&:after {
+		content: '';
+		display: block;
+		width: 5px;
+		height: 17px;
+		margin: 0 0 0 4px;
+		background-color: rgba(255, 255, 255, .26);
+	}
+
+	&:hover {
+		&:after {
+			margin-right: -2px;
+			border-right: 2px solid rgb(208, 2, 27);
+			background-color: rgba(255, 255, 255, .88);
+		}
+	}
+}
+
+.labelNode {
+	color: #fff;
+	font-size: 10px;
+	white-space: nowrap;
+	text-transform: uppercase;
+}
