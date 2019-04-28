@@ -1,11 +1,15 @@
-import React, {useCallback} from "react";
+import React, {
+	useCallback,
+	useState,
+} from "react";
 
 import styles from "./index.module.scss";
 
-import useMoveAble from "../../hooks/useMoveAble";
 import DiagramModule from "../DiagramModule";
 import DiagramConnectPath from "../DiagramConnectPath";
 import DiagramControlPoint from "../DiagramControlPoint";
+
+import useMoveAble from "../../hooks/useMoveAble";
 
 const DiagramCanvas = (props) => {
 
@@ -15,39 +19,68 @@ const DiagramCanvas = (props) => {
 		offsetX,
 		offsetY,
 		scale,
-		onDrop,
-		onMoveCanvas,
-		canvasRef,
 		pathMapper,
 		pathPointMapper,
 		pathControlPointMapper,
 		moduleMapper,
 		inputPortMapper,
 		outputPortMapper,
-		onMoveModule,
-		onSelectModule,
+		onDrop,
+		onMoved,
+		onMouseDown,
+		onModuleMoved,
+		onModuleMouseDown,
 		onConnectPathMouseDown,
 		onControlPointMouseDown,
 	} = props;
 
-	const handleDragOver = useCallback((event) => {
+	const [translate, setTranslate] = useState({
+		x: offsetX,
+		y: offsetY,
+	});
+
+	const dragOverCallback = useCallback((event) => {
 		event.preventDefault();
 	}, []);
 
-	const transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+	const mouseDownCallback = useCallback((event) => {
+		onMouseDown(event);
+	}, [onMouseDown]);
+
+	const moveCallback = useCallback((event, movement) => {
+		setTranslate({
+			x: offsetX + movement.x,
+			y: offsetY + movement.y
+		});
+	}, [offsetX, offsetY]);
+
+	const endMoveCallback = useCallback((event, movement) => {
+		if (movement.x || movement.y) {
+			onMoved && onMoved(event, {
+				x: movement.x + offsetX,
+				y: movement.y + offsetY,
+				movementX: movement.x,
+				movementY: movement.y,
+			});
+		}
+	}, [offsetX, offsetY, onMoved]);
+
+	const [canvasRef] = useMoveAble(moveCallback, endMoveCallback);
+
+	const transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
 	const layerStyle = {
 		width: width,
 		height: height,
 		transform: transform,
 	};
 
-	useMoveAble(canvasRef, (event) => event.altKey, onMoveCanvas);
-
 	return (
-		<div className={styles.hostNode}
-			 ref={canvasRef}
-			 onDrop={onDrop}
-			 onDragOver={handleDragOver}
+		<div
+			ref={canvasRef}
+			className={styles.hostNode}
+			onDrop={onDrop}
+			onDragOver={dragOverCallback}
+			onMouseDown={mouseDownCallback}
 		>
 			<svg className={styles.pathLayer} style={layerStyle}>
 				{
@@ -120,8 +153,8 @@ const DiagramCanvas = (props) => {
 								fillColor={fillColor}
 								inputPortMapper={inputPortMapper}
 								outputPortMapper={outputPortMapper}
-								onMoveModule={onMoveModule}
-								onSelect={onSelectModule}
+								onMoved={onModuleMoved}
+								onMouseDown={onModuleMouseDown}
 							/>
 						);
 					})

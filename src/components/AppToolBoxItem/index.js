@@ -1,4 +1,6 @@
-import React, {useCallback} from "react";
+import React, {
+	useCallback,
+} from "react";
 
 import styles from "./index.module.scss";
 

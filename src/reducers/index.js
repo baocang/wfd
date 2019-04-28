@@ -1,25 +1,29 @@
 import {
+	getUniqueCode,
+} from "../commons/UniqueCode";
+
+import {
 	ACTION_UNDO,
 	ACTION_REDO,
 	ACTION_MOVE_CANVAS,
-	ACTION_RECORD_STATE,
 	ACTION_CREATE_MODULE,
 	ACTION_SELECT_MODULE,
 	ACTION_MOVE_MODULE,
 	ACTION_SELECT_PATH,
-	ACTION_SELECT_CONTROL_POINT,
+	ACTION_SELECT_POINT,
 	ACTION_DESELECT_ALL,
 } from "../constraints";
-
-import {
-	getUniqueCode,
-} from "../commons/UniqueCode";
 
 const undoStack = [];
 const redoStack = [];
 
 window.undoStack = undoStack;
 window.redoStack = redoStack;
+
+const recordState = (state) => {
+	undoStack.push(state);
+	return state;
+};
 
 const undo = (state) => {
 	if (undoStack.length) {
@@ -38,11 +42,16 @@ const redo = (state) => {
 };
 
 const moveCanvas = (state, {movementX, movementY}) => {
-	return {
-		...state,
-		offsetX: state.offsetX + movementX,
-		offsetY: state.offsetY + movementY
-	};
+	if (movementX || movementY) {
+		recordState(state);
+
+		return {
+			...state,
+			offsetX: state.offsetX + movementX,
+			offsetY: state.offsetY + movementY
+		};
+	}
+	return state;
 };
 
 const createWidget = (state, {
@@ -50,6 +59,8 @@ const createWidget = (state, {
 	y,
 	config,
 }) => {
+	recordState(state);
+
 	const {
 		type,
 		width,
@@ -122,6 +133,16 @@ const createWidget = (state, {
 };
 
 const selectModule = (state, {moduleId}) => {
+	const {
+		selectedIds,
+	} = state.modules;
+
+	if (selectedIds.includes(moduleId)) {
+		return state;
+	}
+
+	recordState(state);
+
 	return {
 		...state,
 		modules: {
@@ -143,23 +164,37 @@ const moveModule = (state, {
 	movementX,
 	movementY,
 }) => {
-	return {
-		...state,
-		modules: {
-			...state.modules,
-			byId: {
-				...state.modules.byId,
-				[moduleId]: {
-					...state.modules.byId[moduleId],
-					offsetX: state.modules.byId[moduleId].offsetX + movementX,
-					offsetY: state.modules.byId[moduleId].offsetY + movementY,
+	if (movementX || movementY) {
+		recordState(state);
+
+		return {
+			...state,
+			modules: {
+				...state.modules,
+				byId: {
+					...state.modules.byId,
+					[moduleId]: {
+						...state.modules.byId[moduleId],
+						offsetX: state.modules.byId[moduleId].offsetX + movementX,
+						offsetY: state.modules.byId[moduleId].offsetY + movementY,
+					},
 				},
 			},
-		},
-	};
+		};
+	}
+
+	return state;
 };
 
 const selectPath = (state, {pathId}) => {
+	const {
+		selectedIds,
+	} = state.paths;
+
+	if (selectedIds.includes(pathId)) {
+		return state;
+	}
+
 	const {
 		pointIds
 	} = state.paths.byId[pathId];
@@ -196,7 +231,15 @@ const selectPath = (state, {pathId}) => {
 	return newState;
 };
 
-const selectControlPoint = (state, {pointId}) => {
+const selectPoint = (state, {pointId}) => {
+	const {
+		selectedIds,
+	} = state.points;
+
+	if (selectedIds.includes(pointId)) {
+		return state;
+	}
+
 	return {
 		...state,
 		points: {
@@ -214,53 +257,63 @@ const selectControlPoint = (state, {pointId}) => {
 };
 
 const deSelectAll = (state) => {
-	const newState = {
-		...state,
-		modules: {
-			...state.modules,
-			byId: {
-				...state.modules.byId,
+	if (
+		state.modules.selectedIds.length ||
+		state.paths.selectedIds.length ||
+		state.points.selectedIds.length
+	) {
+		recordState(state);
+
+		const newState = {
+			...state,
+			modules: {
+				...state.modules,
+				byId: {
+					...state.modules.byId,
+				},
+				selectedIds: [],
 			},
-			selectedIds: [],
-		},
-		paths: {
-			...state.paths,
-			byId: {
-				...state.paths.byId,
+			paths: {
+				...state.paths,
+				byId: {
+					...state.paths.byId,
+				},
+				selectedIds: [],
 			},
-			selectedIds: [],
-		},
-		points: {
-			...state.points,
-			byId: {
-				...state.points.byId,
+			points: {
+				...state.points,
+				byId: {
+					...state.points.byId,
+				},
+				selectedIds: [],
 			},
-			selectedIds: [],
-		},
-	};
-
-	state.modules.selectedIds.forEach((id) => {
-		newState.modules.byId[id] = {
-			...state.modules.byId[id],
-			isSelected: false,
 		};
-	});
 
-	state.paths.selectedIds.forEach((id) => {
-		newState.paths.byId[id] = {
-			...state.paths.byId[id],
-			isSelected: false,
-		};
-	});
+		state.modules.selectedIds.forEach((id) => {
+			newState.modules.byId[id] = {
+				...state.modules.byId[id],
+				isSelected: false,
+			};
+		});
 
-	state.points.selectedIds.forEach((id) => {
-		newState.points.byId[id] = {
-			...state.points.byId[id],
-			isSelected: false,
-		};
-	});
+		state.paths.selectedIds.forEach((id) => {
+			newState.paths.byId[id] = {
+				...state.paths.byId[id],
+				isSelected: false,
+			};
+		});
 
-	return newState;
+		state.points.selectedIds.forEach((id) => {
+			newState.points.byId[id] = {
+				...state.points.byId[id],
+				isSelected: false,
+			};
+		});
+
+		return newState;
+	}
+
+	return state;
 };
 
 const reducer = (state, action) => {
@@ -272,9 +325,6 @@ const reducer = (state, action) => {
 			return redo(state);
 		case ACTION_MOVE_CANVAS:
 			return moveCanvas(state, action.payload);
-		case ACTION_RECORD_STATE:
-			undoStack.push(state);
-			return state;
 		case ACTION_CREATE_MODULE:
 			return createWidget(state, action.payload);
 		case ACTION_SELECT_MODULE:
@@ -283,8 +333,8 @@ const reducer = (state, action) => {
 			return moveModule(state, action.payload);
 		case ACTION_SELECT_PATH:
 			return selectPath(state, action.payload);
-		case ACTION_SELECT_CONTROL_POINT:
-			return selectControlPoint(state, action.payload);
+		case ACTION_SELECT_POINT:
+			return selectPoint(state, action.payload);
 		case ACTION_DESELECT_ALL:
 			return deSelectAll(state);
 		default:

@@ -1,5 +1,8 @@
-import React, {useCallback, useLayoutEffect, useMemo, useRef, useReducer} from "react";
-
+import React, {
+	useCallback,
+	useMemo,
+	useReducer,
+} from "react";
 
 import styles from "./AppShell.module.scss";
 
@@ -9,18 +12,17 @@ import AppToolBox from "./components/AppToolBox";
 import DiagramCanvas from "./components/DiagramCanvas";
 
 import reducer from './reducers';
-
 import tools from './data/tools.json';
+
 import {
 	ACTION_UNDO,
 	ACTION_REDO,
 	ACTION_MOVE_CANVAS,
-	ACTION_RECORD_STATE,
 	ACTION_CREATE_MODULE,
 	ACTION_SELECT_MODULE,
 	ACTION_MOVE_MODULE,
 	ACTION_SELECT_PATH,
-	ACTION_SELECT_CONTROL_POINT,
+	ACTION_SELECT_POINT,
 	ACTION_DESELECT_ALL,
 } from "./constraints";
 
@@ -108,8 +110,6 @@ const AppShell = () => {
 
 	const heading = 'Workflow Diagrams - Demo App';
 
-	const canvasRef = useRef(null);
-
 	const [state, dispatch] = useReducer(reducer, initialState);
 
 	const onUndo = useCallback(() => {
@@ -149,21 +149,6 @@ const AppShell = () => {
 		}));
 	}, []);
 
-	const onMoveCanvas = useCallback(({hasMoved, movementX, movementY}) => {
-		if (!hasMoved) {
-			dispatch({
-				type: ACTION_RECORD_STATE,
-			});
-		}
-		dispatch({
-			type: ACTION_MOVE_CANVAS,
-			payload: {
-				movementX,
-				movementY,
-			},
-		});
-	}, []);
-
 	const onCanvasDrop = useCallback((event) => {
 		const data = JSON.parse(event.dataTransfer.getData("data"));
 
@@ -183,14 +168,13 @@ const AppShell = () => {
 			offsetY,
 		} = state;
 
-		// noinspection JSUnresolvedFunction
 		const [{
 			x: canvasX,
 			y: canvasY,
-		}] = canvasRef.current.getClientRects();
+		}] = event.currentTarget.getClientRects();
 
 		dispatch({
-			type: ACTION_RECORD_STATE,
+			type: ACTION_DESELECT_ALL,
 		});
 
 		dispatch({
@@ -203,12 +187,17 @@ const AppShell = () => {
 		});
 	}, [state]);
 
-	const onMoveModule = useCallback(({moduleId, hasMoved, movementX, movementY}) => {
-		if (!hasMoved) {
-			dispatch({
-				type: ACTION_RECORD_STATE,
-			});
-		}
+	const onCanvasMoved = useCallback((event, {movementX, movementY}) => {
+		dispatch({
+			type: ACTION_MOVE_CANVAS,
+			payload: {
+				movementX,
+				movementY,
+			},
+		});
+	}, []);
+
+	const onModuleMoved = useCallback((event, {moduleId, movementX, movementY}) => {
 		dispatch({
 			type: ACTION_MOVE_MODULE,
 			payload: {
@@ -219,14 +208,25 @@ const AppShell = () => {
 		});
 	}, []);
 
-	const onSelectModule = useCallback((moduleId) => {
-		dispatch({
-			type: ACTION_SELECT_MODULE,
-			payload: {
-				moduleId,
-			},
-		});
-	}, []);
+	const onModuleMouseDown = useCallback((event, {moduleId}) => {
+		const {
+			selectedIds
+		} = state.modules;
+
+		if (selectedIds.indexOf(moduleId) === -1) {
+			dispatch({
+				type: ACTION_DESELECT_ALL,
+			});
+
+			dispatch({
+				type: ACTION_SELECT_MODULE,
+				payload: {
+					moduleId,
+				},
+			});
+		}
+
+	}, [state]);
 
 	const onConnectPathMouseDown = useCallback((event, {pathId}) => {
 		event.stopPropagation();
@@ -241,7 +241,7 @@ const AppShell = () => {
 	const onControlPointMouseDown = useCallback((event, {pointId}) => {
 		event.stopPropagation();
 		dispatch({
-			type: ACTION_SELECT_CONTROL_POINT,
+			type: ACTION_SELECT_POINT,
 			payload: {
 				pointId,
 			},
@@ -319,25 +319,13 @@ const AppShell = () => {
 		};
 	}, [state]);
 
-	useLayoutEffect(() => {
-		const {current: canvas} = canvasRef;
-
-		if (canvas) {
-			const handleClick = (event) => {
-				if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-					dispatch({
-						type: ACTION_DESELECT_ALL,
-					});
-				}
-			};
-
-			canvas.addEventListener('mousedown', handleClick);
-
-			return () => {
-				canvas.removeEventListener('mousedown', handleClick);
-			};
+	const onCanvasMouseDown = useCallback((event) => {
+		if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
+			dispatch({
+				type: ACTION_DESELECT_ALL,
+			});
 		}
-	}, [canvasRef]);
+	}, []);
 
 	return (
 		<div className={styles.hostNode}>
@@ -356,7 +344,6 @@ const AppShell = () => {
 					moduleMapper={moduleMapper}
 					inputPortMapper={inputPortMapper}
 					outputPortMapper={outputPortMapper}
-					canvasRef={canvasRef}
 					width={state.width}
 					height={state.height}
 					offsetX={state.offsetX}
@@ -364,9 +351,10 @@ const AppShell = () => {
 					scale={1}
 					dispatch={dispatch}
 					onDrop={onCanvasDrop}
-					onMoveCanvas={onMoveCanvas}
-					onMoveModule={onMoveModule}
-					onSelectModule={onSelectModule}
+					onMoved={onCanvasMoved}
+					onMouseDown={onCanvasMouseDown}
+					onModuleMoved={onModuleMoved}
+					onModuleMouseDown={onModuleMouseDown}
 					onConnectPathMouseDown={onConnectPathMouseDown}
 					onControlPointMouseDown={onControlPointMouseDown}
 				/>

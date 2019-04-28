@@ -1,7 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+
 import './index.module.scss';
+
 import AppShell from './AppShell';
+
 import * as serviceWorker from './serviceWorker';
 
 const root = document.getElementById("root");

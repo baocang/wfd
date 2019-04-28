@@ -1,4 +1,6 @@
-import {getRandomCode} from "../RandomCode";
+import {
+	getRandomCode,
+} from "../RandomCode";
 
 export const getUniqueCode = (codes, size = 8) => {
 	let code = null;

@@ -1,10 +1,12 @@
 import React from "react";
 
 import styles from "./index.module.scss";
+
 import DiagramToolBoxGroup from "../AppToolBoxGroup";
 import DiagramToolBoxItem from "../AppToolBoxItem";
 
 const DiagramToolBox = (props) => {
+
 	const {
 		onItemDragStart,
 	} = props;

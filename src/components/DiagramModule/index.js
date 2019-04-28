@@ -1,7 +1,14 @@
-import React, {useCallback, useRef} from "react";
+import React, {
+	useCallback,
+	useState,
+} from "react";
+
 import classNames from "classnames";
+
 import styles from "./index.module.scss";
+
 import DiagramModulePort from "../DiagramModulePort";
+
 import useMoveAble from "../../hooks/useMoveAble";
 
 const DiagramModule = (props) => {
@@ -16,20 +23,38 @@ const DiagramModule = (props) => {
 		moduleId,
 		inputPortMapper,
 		outputPortMapper,
-		onMoveModule,
-		onSelect,
+		onMoved,
+		onMouseDown,
 	} = props;
 
-	const moduleRef = useRef(null);
-
-	const handleSelect = useCallback((event) => {
-		event.stopPropagation();
-		onSelect(moduleId);
-	}, [moduleId, onSelect]);
-
-	useMoveAble(moduleRef, () => true, ({hasMoved, movementX, movementY}) => {
-		onMoveModule({moduleId, hasMoved, movementX, movementY});
+	const [translate, setTranslate] = useState({
+		x: offsetX,
+		y: offsetY,
 	});
+
+	const mouseDownCallback = useCallback((event) => {
+		event.stopPropagation();
+		onMouseDown(event, {moduleId});
+	}, [moduleId, onMouseDown]);
+
+	const moveCallback = useCallback((event, {x, y}) => {
+		setTranslate({
+			x: offsetX + x,
+			y: offsetY + y
+		});
+	}, [offsetX, offsetY]);
+
+	const endMoveCallback = useCallback((event, {x, y}) => {
+		if (x || y) {
+			onMoved && onMoved(event, {
+				moduleId,
+				movementX: x,
+				movementY: y,
+			});
+		}
+	}, [moduleId, onMoved]);
+
+	const [moduleRef] = useMoveAble(moveCallback, endMoveCallback);
 
 	return (
 		<div
@@ -39,12 +64,11 @@ const DiagramModule = (props) => {
 				[styles.selected]: isSelected,
 			})}
 			style={{
-				top: `${offsetY}px`,
-				left: `${offsetX}px`,
-				backgroundColor: fillColor,
 				width: `${width}px`,
+				backgroundColor: fillColor,
+				transform: `translate(${translate.x}px, ${translate.y}px)`,
 			}}
-			onMouseDown={handleSelect}
+			onMouseDown={mouseDownCallback}
 		>
 			<div
 				className={styles.headerNode}

@@ -1,11 +1,15 @@
-import React, {useCallback, useState} from "react";
+import React, {
+	useCallback,
+	useState,
+} from "react";
+
 import classNames from "classnames";
+
+import styles from "./index.module.scss";
 
 import {
 	generateSvgPathData
 } from "../../commons/BezierCurve";
-
-import styles from "./index.module.scss";
 
 const DiagramConnectPath = (props) => {
 
