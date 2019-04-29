@@ -12,9 +12,11 @@ import {
 	ACTION_CREATE_PATH,
 	ACTION_SELECT_PATH,
 	ACTION_SELECT_POINT,
+	ACTION_MOVE_POINT,
 	ACTION_MOVE_POINT_BY_PORT,
 	ACTION_ATTACH_POINT_TO_INPUT_PORT,
 	ACTION_REMOVE_PATH,
+	ACTION_INSERT_POINT_TO_PATH,
 	ACTION_DESELECT_ALL,
 } from "../constraints";
 
@@ -400,10 +402,10 @@ const selectPoint = (state, {pointId}) => {
 	const {
 		selectedIds,
 	} = state.points;
-
-	if (selectedIds.includes(pointId)) {
-		return state;
-	}
+	//
+	// if (selectedIds.includes(pointId)) {
+	// 	return state;
+	// }
 
 	const newState = deSelectAll(state);
 
@@ -419,6 +421,34 @@ const selectPoint = (state, {pointId}) => {
 				},
 			},
 			selectedIds: [pointId],
+		},
+	};
+};
+
+const movePoint = (state, {
+	pointId,
+	movementX,
+	movementY,
+}) => {
+	const {
+		[pointId]: {
+			x: offsetX,
+			y: offsetY,
+		},
+	} = state.points.byId;
+
+	return {
+		...state,
+		points: {
+			...state.points,
+			byId: {
+				...state.points.byId,
+				[pointId]: {
+					...state.points.byId[pointId],
+					x: offsetX + movementX,
+					y: offsetY + movementY,
+				}
+			},
 		},
 	};
 };
@@ -656,6 +686,55 @@ const removePath = (state, payload) => {
 	return state;
 };
 
+const insertPointToPath = (state, {
+	x,
+	y,
+	index,
+	pathId,
+}) => {
+	const pointId = getUniqueCode(state.points.allIds);
+
+	const newPointModel = {
+		id: pointId,
+		pathId: pathId,
+		x: x,
+		y: y,
+		isTarget: false,
+		isSource: false,
+	};
+
+	return {
+		...state,
+		paths: {
+			...state.paths,
+			byId: {
+				...state.paths.byId,
+				[pathId]: {
+					...state.paths.byId[pathId],
+					pointIds: [
+						...state.paths.byId[pathId].pointIds.slice(0, index),
+						pointId,
+						...state.paths.byId[pathId].pointIds.slice(index),
+					],
+				},
+			},
+			selectedIds: [],
+		},
+		points: {
+			...state.points,
+			byId: {
+				...state.points.byId,
+				[pointId]: newPointModel,
+			},
+			allIds: [
+				...state.points.allIds,
+				pointId,
+			],
+			selectedIds: [pointId],
+		},
+	};
+};
+
 const deSelectAll = (state) => {
 	if (
 		state.modules.selectedIds.length ||
@@ -736,12 +815,16 @@ const reducer = (state, action) => {
 			return selectPath(state, action.payload);
 		case ACTION_SELECT_POINT:
 			return selectPoint(state, action.payload);
+		case ACTION_MOVE_POINT:
+			return movePoint(state, action.payload);
 		case ACTION_MOVE_POINT_BY_PORT:
 			return movePointByPort(state, action.payload);
 		case ACTION_ATTACH_POINT_TO_INPUT_PORT:
 			return attachPointToInputPort(state, action.payload);
 		case ACTION_REMOVE_PATH:
 			return removePath(state, action.payload);
+		case ACTION_INSERT_POINT_TO_PATH:
+			return insertPointToPath(state, action.payload);
 		case ACTION_DESELECT_ALL:
 			return deSelectAll(state);
 		default:

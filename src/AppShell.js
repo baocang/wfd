@@ -10,6 +10,9 @@ import AppHeader from "./components/AppHeader";
 import AppToolBar from "./components/AppToolBar";
 import AppToolBox from "./components/AppToolBox";
 import DiagramCanvas from "./components/DiagramCanvas";
+import {
+	indexOfPointInCurve,
+} from "./commons/BezierCurve";
 
 import reducer from './reducers';
 
@@ -25,9 +28,11 @@ import {
 	ACTION_CREATE_PATH,
 	ACTION_SELECT_PATH,
 	ACTION_SELECT_POINT,
+	ACTION_MOVE_POINT,
 	ACTION_MOVE_POINT_BY_PORT,
 	ACTION_ATTACH_POINT_TO_INPUT_PORT,
 	ACTION_REMOVE_PATH,
+	ACTION_INSERT_POINT_TO_PATH,
 	ACTION_DESELECT_ALL,
 } from "./constraints";
 
@@ -213,11 +218,11 @@ const AppShell = () => {
 				canvasY,
 			},
 		});
-	}, [state]);
+	}, []);
 
 	const modulePortMouseDownCallback = useCallback((event, {portId}) => {
 
-	}, [state]);
+	}, []);
 
 	const modulePortDragStartCallback = useCallback((event, {
 		portId,
@@ -273,13 +278,13 @@ const AppShell = () => {
 				movementY,
 			},
 		});
-	}, [state]);
+	}, []);
 
 	const modulePortDragEndCallback = useCallback(() => {
 		dispatch({
 			type: ACTION_REMOVE_PATH,
 		});
-	}, [state]);
+	}, []);
 
 	const connectPathMouseDownCallback = useCallback((event, {pathId}) => {
 		event.stopPropagation();
@@ -292,6 +297,54 @@ const AppShell = () => {
 		});
 	}, []);
 
+	const connectPathDoubleClickCallback = useCallback((event, {
+		pathId,
+		canvasX,
+		canvasY,
+		strokeWidth,
+	}) => {
+		event.stopPropagation();
+
+		const {
+			offsetX,
+			offsetY,
+		} = state;
+
+		const newX = event.clientX - canvasX - offsetX;
+		const newY = event.clientY - canvasY - offsetY;
+
+		const {
+			curvy,
+			pointIds,
+		} = state.paths.byId[pathId];
+
+		const points = pointIds.map((pointId) => {
+			return state.points.byId[pointId];
+		});
+
+		const newIndex = indexOfPointInCurve(
+			points,
+			{
+				x: newX,
+				y: newY,
+			},
+			curvy,
+			strokeWidth,
+		);
+
+		if (newIndex >= 0) {
+			dispatch({
+				type: ACTION_INSERT_POINT_TO_PATH,
+				payload: {
+					index: newIndex,
+					pathId: pathId,
+					x: newX,
+					y: newY,
+				},
+			});
+		}
+	}, [state]);
+
 	const controlPointMouseDownCallback = useCallback((event, {pointId}) => {
 		event.stopPropagation();
 
@@ -302,6 +355,21 @@ const AppShell = () => {
 			},
 		});
 	}, []);
+
+	const handleControlPointDragMove = useCallback((event, {
+		pointId,
+		movementX,
+		movementY,
+	}) => {
+		dispatch({
+			type: ACTION_MOVE_POINT,
+			payload: {
+				pointId,
+				movementX,
+				movementY,
+			},
+		});
+	});
 
 	const pathMapper = useMemo(() => {
 		return (callback) => {
@@ -415,7 +483,10 @@ const AppShell = () => {
 					onModulePortDragEnd={modulePortDragEndCallback}
 
 					onConnectPathMouseDown={connectPathMouseDownCallback}
+					onConnectPathDoubleClick={connectPathDoubleClickCallback}
+
 					onControlPointMouseDown={controlPointMouseDownCallback}
+					onControlPointDragMove={handleControlPointDragMove}
 				/>
 			</div>
 		</div>

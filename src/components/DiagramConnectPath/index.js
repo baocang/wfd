@@ -15,7 +15,7 @@ const DiagramConnectPath = (props) => {
 
 	const {
 		curvy,
-		strokeWidth,
+		strokeWidth = 15,
 		children,
 		isSelected,
 		pathId,
@@ -26,7 +26,36 @@ const DiagramConnectPath = (props) => {
 		onMouseUp,
 	} = props;
 
+	const pathData = generateSvgPathData(points, curvy);
+
 	const [isActive, setActive] = useState(false);
+
+	const handleClick = useCallback((event) => {
+		onClick && onClick(event, {
+			pathId,
+		});
+	}, [pathId, onClick]);
+
+	const handleDoubleClick = useCallback((event) => {
+		onDoubleClick && onDoubleClick(event, {
+			pathId,
+			strokeWidth,
+		});
+	}, [pathId, strokeWidth, onDoubleClick]);
+
+	const handleMouseUp = useCallback((event) => {
+		onMouseUp && onMouseUp(event, {
+			pathId,
+			strokeWidth,
+		});
+	}, [pathId, strokeWidth, onMouseUp]);
+
+	const handleMouseDown = useCallback((event) => {
+		onMouseDown && onMouseDown(event, {
+			pathId,
+			strokeWidth,
+		});
+	}, [pathId, strokeWidth, onMouseDown]);
 
 	const handleMouseEnter = useCallback(() => {
 		setActive(true);
@@ -36,37 +65,16 @@ const DiagramConnectPath = (props) => {
 		setActive(false);
 	}, []);
 
-	const pathData = generateSvgPathData(points, curvy);
-
 	return (
 		<g
 			className={classNames({
 				[styles.hostNode]: true,
 				[styles.selected]: isSelected || isActive,
 			})}
-			onClick={(event) => {
-				onClick && onClick(event, {
-					pathId,
-				});
-			}}
-			onDoubleClick={(event) => {
-				onDoubleClick && onDoubleClick(event, {
-					pathId,
-					strokeWidth,
-				});
-			}}
-			onMouseDown={(event) => {
-				onMouseDown && onMouseDown(event, {
-					pathId,
-					strokeWidth,
-				});
-			}}
-			onMouseUp={(event) => {
-				onMouseUp && onMouseUp(event, {
-					pathId,
-					strokeWidth,
-				});
-			}}
+			onClick={handleClick}
+			onDoubleClick={handleDoubleClick}
+			onMouseUp={handleMouseUp}
+			onMouseDown={handleMouseDown}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>

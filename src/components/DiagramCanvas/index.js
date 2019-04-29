@@ -42,7 +42,10 @@ const DiagramCanvas = (props) => {
 		onModulePortDragEnd,
 
 		onConnectPathMouseDown,
+		onConnectPathDoubleClick,
+
 		onControlPointMouseDown,
+		onControlPointDragMove,
 	} = props;
 
 	const dragStartCallback = useCallback((event) => {
@@ -94,7 +97,7 @@ const DiagramCanvas = (props) => {
 				canvasY,
 			});
 		}
-	}, [onModulePortMouseUp]);
+	}, [canvasRef, onModulePortMouseUp]);
 
 	const modulePortMouseDownCallback = useCallback((event, {portId}) => {
 		onModulePortMouseDown && onModulePortMouseDown(event, {portId});
@@ -163,6 +166,47 @@ const DiagramCanvas = (props) => {
 		}
 	}, [canvasRef, onModulePortDragEnd]);
 
+	const handlePointDragStart = useCallback(() => {
+
+	}, []);
+
+	const handlePointDragMove = useCallback((event, {
+		pointId,
+		movementX,
+		movementY,
+	}) => {
+		onControlPointDragMove && onControlPointDragMove(event, {
+			pointId,
+			movementX,
+			movementY,
+		});
+	}, []);
+
+	const handlePointDragEnd = useCallback(() => {
+
+	}, []);
+
+	const handleConnectPathDoubleClick = useCallback((event, {
+		pathId,
+		strokeWidth,
+	}) => {
+		const canvas = canvasRef.current;
+
+		if (canvas) {
+			const [{
+				x: canvasX,
+				y: canvasY,
+			}] = canvas.getClientRects();
+
+			onConnectPathDoubleClick && onConnectPathDoubleClick(event, {
+				pathId,
+				canvasX,
+				canvasY,
+				strokeWidth,
+			});
+		}
+	}, [canvasRef, onConnectPathDoubleClick]);
+
 	const layerStyle = {
 		width: width,
 		height: height,
@@ -197,6 +241,7 @@ const DiagramCanvas = (props) => {
 								curvy={curvy}
 								isSelected={isSelected}
 								onMouseDown={onConnectPathMouseDown}
+								onDoubleClick={handleConnectPathDoubleClick}
 							>
 								{
 									pathControlPointMapper(id, (item, index) => {
@@ -215,6 +260,9 @@ const DiagramCanvas = (props) => {
 												pointId={id}
 												isSelected={isSelected}
 												onMouseDown={onControlPointMouseDown}
+												onDragStart={handlePointDragStart}
+												onDragMove={handlePointDragMove}
+												onDragEnd={handlePointDragEnd}
 											/>
 										);
 									})
