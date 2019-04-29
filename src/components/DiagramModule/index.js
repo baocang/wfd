@@ -1,6 +1,5 @@
 import React, {
 	useCallback,
-	useState,
 } from "react";
 
 import classNames from "classnames";
@@ -9,7 +8,7 @@ import styles from "./index.module.scss";
 
 import DiagramModulePort from "../DiagramModulePort";
 
-import useMoveAble from "../../hooks/useMoveAble";
+import useDraggable from "../../hooks/useDraggable";
 
 const DiagramModule = (props) => {
 
@@ -23,38 +22,51 @@ const DiagramModule = (props) => {
 		moduleId,
 		inputPortMapper,
 		outputPortMapper,
-		onMoved,
+
 		onMouseDown,
+		onDragStart,
+		onDragMove,
+		onDragEnd,
+
+		onPortMouseUp,
+		onPortMouseDown,
+
+		onPortDragStart,
+		onPortDragMove,
+		onPortDragEnd,
 	} = props;
 
-	const [translate, setTranslate] = useState({
-		x: offsetX,
-		y: offsetY,
-	});
-
 	const mouseDownCallback = useCallback((event) => {
-		event.stopPropagation();
-		onMouseDown(event, {moduleId});
+		onMouseDown && onMouseDown(event, {moduleId});
 	}, [moduleId, onMouseDown]);
 
-	const moveCallback = useCallback((event, {x, y}) => {
-		setTranslate({
-			x: offsetX + x,
-			y: offsetY + y
+	const dragStartCallback = useCallback((event) => {
+		onDragStart && onDragStart(event, {moduleId});
+	}, [moduleId, onDragStart]);
+
+	const dragMoveCallback = useCallback((event, {
+		movementX,
+		movementY,
+	}) => {
+		onDragMove && onDragMove(event, {
+			moduleId,
+			movementX,
+			movementY,
+		})
+	}, [moduleId, onDragMove]);
+
+	const dragEndCallback = useCallback((event, {
+		movementX,
+		movementY,
+	}) => {
+		onDragEnd && onDragEnd(event, {
+			moduleId,
+			movementX,
+			movementY,
 		});
-	}, [offsetX, offsetY]);
+	}, [moduleId, onDragEnd]);
 
-	const endMoveCallback = useCallback((event, {x, y}) => {
-		if (x || y) {
-			onMoved && onMoved(event, {
-				moduleId,
-				movementX: x,
-				movementY: y,
-			});
-		}
-	}, [moduleId, onMoved]);
-
-	const [moduleRef] = useMoveAble(moveCallback, endMoveCallback);
+	const [moduleRef] = useDraggable(dragStartCallback, dragMoveCallback, dragEndCallback);
 
 	return (
 		<div
@@ -65,8 +77,9 @@ const DiagramModule = (props) => {
 			})}
 			style={{
 				width: `${width}px`,
+				top: `${offsetY}px`,
+				left: `${offsetX}px`,
 				backgroundColor: fillColor,
-				transform: `translate(${translate.x}px, ${translate.y}px)`,
 			}}
 			onMouseDown={mouseDownCallback}
 		>
@@ -80,6 +93,7 @@ const DiagramModule = (props) => {
 					{
 						inputPortMapper(moduleId, (item, index) => {
 							const {
+								id,
 								text,
 							} = item;
 
@@ -88,6 +102,8 @@ const DiagramModule = (props) => {
 									key={index}
 									mode={'in'}
 									text={text}
+									portId={id}
+									onMouseUp={onPortMouseUp}
 								/>
 							);
 						})
@@ -97,6 +113,7 @@ const DiagramModule = (props) => {
 					{
 						outputPortMapper(moduleId, (item, index) => {
 							const {
+								id,
 								text,
 							} = item;
 
@@ -105,6 +122,11 @@ const DiagramModule = (props) => {
 									key={index}
 									mode={'out'}
 									text={text}
+									portId={id}
+									onMouseDown={onPortMouseDown}
+									onDragStart={onPortDragStart}
+									onDragMove={onPortDragMove}
+									onDragEnd={onPortDragEnd}
 								/>
 							);
 						})

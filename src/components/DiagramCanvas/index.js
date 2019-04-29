@@ -1,6 +1,5 @@
 import React, {
 	useCallback,
-	useState,
 } from "react";
 
 import styles from "./index.module.scss";
@@ -9,7 +8,7 @@ import DiagramModule from "../DiagramModule";
 import DiagramConnectPath from "../DiagramConnectPath";
 import DiagramControlPoint from "../DiagramControlPoint";
 
-import useMoveAble from "../../hooks/useMoveAble";
+import useDraggable from "../../hooks/useDraggable";
 
 const DiagramCanvas = (props) => {
 
@@ -18,7 +17,6 @@ const DiagramCanvas = (props) => {
 		height,
 		offsetX,
 		offsetY,
-		scale,
 		pathMapper,
 		pathPointMapper,
 		pathControlPointMapper,
@@ -26,52 +24,150 @@ const DiagramCanvas = (props) => {
 		inputPortMapper,
 		outputPortMapper,
 		onDrop,
-		onMoved,
+		onDragStart,
+		onDragMove,
+		onDragEnd,
 		onMouseDown,
-		onModuleMoved,
+
+		onModuleDragStart,
+		onModuleDragMove,
+		onModuleDragEnd,
 		onModuleMouseDown,
+
+		onModulePortMouseUp,
+		onModulePortMouseDown,
+
+		onModulePortDragStart,
+		onModulePortDragMove,
+		onModulePortDragEnd,
+
 		onConnectPathMouseDown,
 		onControlPointMouseDown,
 	} = props;
 
-	const [translate, setTranslate] = useState({
-		x: offsetX,
-		y: offsetY,
-	});
+	const dragStartCallback = useCallback((event) => {
+		onDragStart && onDragStart(event);
+	}, [onDragStart]);
+
+	const dragMoveCallback = useCallback((event, {
+		movementX,
+		movementY,
+	}) => {
+		onDragMove && onDragMove(event, {
+			movementX,
+			movementY,
+		});
+	}, [onDragMove]);
+
+	const dragEndCallback = useCallback((event, {
+		movementX,
+		movementY,
+	}) => {
+		onDragEnd && onDragEnd(event, {
+			movementX,
+			movementY,
+		});
+	}, [onDragEnd]);
+
+	const [canvasRef] = useDraggable(dragStartCallback, dragMoveCallback, dragEndCallback);
 
 	const dragOverCallback = useCallback((event) => {
 		event.preventDefault();
 	}, []);
 
 	const mouseDownCallback = useCallback((event) => {
-		onMouseDown(event);
+		onMouseDown && onMouseDown(event);
 	}, [onMouseDown]);
 
-	const moveCallback = useCallback((event, movement) => {
-		setTranslate({
-			x: offsetX + movement.x,
-			y: offsetY + movement.y
-		});
-	}, [offsetX, offsetY]);
+	const modulePortMouseUpCallback = useCallback((event, {portId}) => {
+		const canvas = canvasRef.current;
 
-	const endMoveCallback = useCallback((event, movement) => {
-		if (movement.x || movement.y) {
-			onMoved && onMoved(event, {
-				x: movement.x + offsetX,
-				y: movement.y + offsetY,
-				movementX: movement.x,
-				movementY: movement.y,
+		if (canvas && onModulePortMouseUp) {
+			const [{
+				x: canvasX,
+				y: canvasY,
+			}] = canvas.getClientRects();
+
+			onModulePortMouseUp(event, {
+				portId,
+				canvasX,
+				canvasY,
 			});
 		}
-	}, [offsetX, offsetY, onMoved]);
+	}, [onModulePortMouseUp]);
 
-	const [canvasRef] = useMoveAble(moveCallback, endMoveCallback);
+	const modulePortMouseDownCallback = useCallback((event, {portId}) => {
+		onModulePortMouseDown && onModulePortMouseDown(event, {portId});
+	}, [onModulePortMouseDown]);
 
-	const transform = `translate(${translate.x}px, ${translate.y}px) scale(${scale})`;
+	const modulePortDragStartCallback = useCallback((event, {portId}) => {
+		const canvas = canvasRef.current;
+
+		if (canvas && onModulePortDragStart) {
+			const [{
+				x: canvasX,
+				y: canvasY,
+			}] = canvas.getClientRects();
+
+			onModulePortDragStart(event, {
+				portId,
+				canvasX,
+				canvasY,
+			});
+		}
+	}, [canvasRef, onModulePortDragStart]);
+
+	const modulePortDragMoveCallback = useCallback((event, {
+		portId,
+		movementX,
+		movementY,
+	}) => {
+		const canvas = canvasRef.current;
+
+		if (canvas && onModulePortDragMove && (movementX || movementY)) {
+			const [{
+				x: canvasX,
+				y: canvasY,
+			}] = canvas.getClientRects();
+
+			onModulePortDragMove(event, {
+				portId,
+				canvasX,
+				canvasY,
+				movementX,
+				movementY,
+			});
+		}
+	}, [canvasRef, onModulePortDragMove]);
+
+	const modulePortDragEndCallback = useCallback((event, {
+		portId,
+		movementX,
+		movementY,
+	}) => {
+		const canvas = canvasRef.current;
+
+		if (canvas && onModulePortDragEnd) {
+			const [{
+				x: canvasX,
+				y: canvasY,
+			}] = canvas.getClientRects();
+
+			onModulePortDragEnd(event, {
+				portId,
+				canvasX,
+				canvasY,
+				movementX,
+				movementY,
+			});
+		}
+	}, [canvasRef, onModulePortDragEnd]);
+
 	const layerStyle = {
 		width: width,
 		height: height,
-		transform: transform,
+		top: `${offsetY}px`,
+		left: `${offsetX}px`,
 	};
 
 	return (
@@ -153,8 +249,18 @@ const DiagramCanvas = (props) => {
 								fillColor={fillColor}
 								inputPortMapper={inputPortMapper}
 								outputPortMapper={outputPortMapper}
-								onMoved={onModuleMoved}
+
 								onMouseDown={onModuleMouseDown}
+								onDragStart={onModuleDragStart}
+								onDragMove={onModuleDragMove}
+								onDragEnd={onModuleDragEnd}
+
+								onPortMouseUp={modulePortMouseUpCallback}
+								onPortMouseDown={modulePortMouseDownCallback}
+
+								onPortDragStart={modulePortDragStartCallback}
+								onPortDragMove={modulePortDragMoveCallback}
+								onPortDragEnd={modulePortDragEndCallback}
 							/>
 						);
 					})

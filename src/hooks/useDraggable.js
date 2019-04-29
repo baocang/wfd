@@ -3,21 +3,24 @@ import {
 	useRef,
 } from "react";
 
-let mutexLocked = false;
+let mutex = {
+	locked: false,
+};
 
-const useMoveAble = (moveCallback, endCallback) => {
+const useDraggable = (startCallback, moveCallback, endCallback) => {
 
 	const targetRef = useRef(null);
-	const mouseDownEventRef = useRef(null);
+	const mouseEventRef = useRef(null);
 
 	useEffect(() => {
 		const target = targetRef.current;
 
 		if (target) {
 			const handleMouseDown = (event) => {
-				if (!mutexLocked) {
-					mutexLocked = true;
-					mouseDownEventRef.current = event;
+				if (!mutex.locked) {
+					mutex.locked = true;
+					mouseEventRef.current = event;
+					startCallback && startCallback(event);
 				}
 			};
 
@@ -27,19 +30,21 @@ const useMoveAble = (moveCallback, endCallback) => {
 				target.removeEventListener('mousedown', handleMouseDown);
 			};
 		}
-	}, [targetRef]);
+	}, [startCallback]);
 
 	useEffect(() => {
 		const handleMouseMove = (event) => {
-			if (mouseDownEventRef.current) {
+			if (mouseEventRef.current) {
 				const {
 					clientX,
 					clientY
-				} = mouseDownEventRef.current;
+				} = mouseEventRef.current;
+
+				mouseEventRef.current = event;
 
 				moveCallback && moveCallback(event, {
-					x: event.clientX - clientX,
-					y: event.clientY - clientY,
+					movementX: event.clientX - clientX,
+					movementY: event.clientY - clientY,
 				});
 			}
 		};
@@ -53,19 +58,19 @@ const useMoveAble = (moveCallback, endCallback) => {
 
 	useEffect(() => {
 		const handleMouseUp = (event) => {
-			if (mouseDownEventRef.current) {
+			if (mouseEventRef.current) {
 				const {
 					clientX,
 					clientY
-				} = mouseDownEventRef.current;
+				} = mouseEventRef.current;
 
 				endCallback && endCallback(event, {
-					x: event.clientX - clientX,
-					y: event.clientY - clientY,
+					movementX: event.clientX - clientX,
+					movementY: event.clientY - clientY,
 				});
 
-				mutexLocked = false;
-				mouseDownEventRef.current = null;
+				mutex.locked = false;
+				mouseEventRef.current = null;
 			}
 		};
 
@@ -80,4 +85,4 @@ const useMoveAble = (moveCallback, endCallback) => {
 
 };
 
-export default useMoveAble;
+export default useDraggable;

@@ -12,6 +12,7 @@ import AppToolBox from "./components/AppToolBox";
 import DiagramCanvas from "./components/DiagramCanvas";
 
 import reducer from './reducers';
+
 import tools from './data/tools.json';
 
 import {
@@ -21,8 +22,12 @@ import {
 	ACTION_CREATE_MODULE,
 	ACTION_SELECT_MODULE,
 	ACTION_MOVE_MODULE,
+	ACTION_CREATE_PATH,
 	ACTION_SELECT_PATH,
 	ACTION_SELECT_POINT,
+	ACTION_MOVE_POINT_BY_PORT,
+	ACTION_ATTACH_POINT_TO_INPUT_PORT,
+	ACTION_REMOVE_PATH,
 	ACTION_DESELECT_ALL,
 } from "./constraints";
 
@@ -38,64 +43,15 @@ export const initialState = {
 		allIds: [],
 	},
 	paths: {
-		byId: {
-			1: {
-				id: 1,
-				curvy: 80,
-				isActive: false,
-				isSelected: false,
-				pointIds: [
-					1,
-					2,
-					3,
-				],
-				sourcePortId: null,
-				targetPortId: null,
-			},
-		},
-		allIds: [
-			1,
-		],
+		byId: {},
+		allIds: [],
 		activeIds: [],
 		selectedIds: [],
 		pathCurvy: 80,
 	},
 	points: {
-		byId: {
-			1: {
-				id: 1,
-				pathId: 1,
-				x: 91,
-				y: 46.5,
-				isTarget: false,
-				isSource: true,
-				isActive: false,
-				isSelected: false,
-			},
-			2: {
-				id: 2,
-				pathId: 1,
-				x: 108,
-				y: 107,
-				isTarget: false,
-				isSource: false,
-			},
-			3: {
-				id: 3,
-				pathId: 1,
-				x: 128,
-				y: 169.5,
-				isTarget: true,
-				isSource: false,
-				isActive: false,
-				isSelected: false,
-			},
-		},
-		allIds: [
-			1,
-			2,
-			3,
-		],
+		byId: {},
+		allIds: [],
 		activeIds: [],
 		selectedIds: [],
 	},
@@ -112,19 +68,19 @@ const AppShell = () => {
 
 	const [state, dispatch] = useReducer(reducer, initialState);
 
-	const onUndo = useCallback(() => {
+	const undoCallback = useCallback(() => {
 		dispatch({
 			type: ACTION_UNDO,
 		});
 	}, []);
 
-	const onRedo = useCallback(() => {
+	const redoCallback = useCallback(() => {
 		dispatch({
 			type: ACTION_REDO,
 		});
 	}, []);
 
-	const onToolItemDragStart = useCallback((event) => {
+	const toolItemDragStartCallback = useCallback((event) => {
 		const {
 			clientX,
 			clientY,
@@ -149,7 +105,23 @@ const AppShell = () => {
 		}));
 	}, []);
 
-	const onCanvasDrop = useCallback((event) => {
+	const canvasMouseDownCallback = useCallback((event) => {
+		dispatch({
+			type: ACTION_DESELECT_ALL,
+		});
+	}, []);
+
+	const canvasDragMoveCallback = useCallback((event, {movementX, movementY}) => {
+		dispatch({
+			type: ACTION_MOVE_CANVAS,
+			payload: {
+				movementX,
+				movementY,
+			},
+		});
+	}, []);
+
+	const canvasDropCallback = useCallback((event) => {
 		const data = JSON.parse(event.dataTransfer.getData("data"));
 
 		const {
@@ -174,10 +146,6 @@ const AppShell = () => {
 		}] = event.currentTarget.getClientRects();
 
 		dispatch({
-			type: ACTION_DESELECT_ALL,
-		});
-
-		dispatch({
 			type: ACTION_CREATE_MODULE,
 			payload: {
 				config: config,
@@ -187,17 +155,11 @@ const AppShell = () => {
 		});
 	}, [state]);
 
-	const onCanvasMoved = useCallback((event, {movementX, movementY}) => {
-		dispatch({
-			type: ACTION_MOVE_CANVAS,
-			payload: {
-				movementX,
-				movementY,
-			},
-		});
+	const moduleDragStartCallback = useCallback((event) => {
+
 	}, []);
 
-	const onModuleMoved = useCallback((event, {moduleId, movementX, movementY}) => {
+	const moduleDragMoveCallback = useCallback((event, {moduleId, movementX, movementY}) => {
 		dispatch({
 			type: ACTION_MOVE_MODULE,
 			payload: {
@@ -208,16 +170,18 @@ const AppShell = () => {
 		});
 	}, []);
 
-	const onModuleMouseDown = useCallback((event, {moduleId}) => {
+	const moduleDragEndCallback = useCallback((event) => {
+
+	}, []);
+
+	const moduleMouseDownCallback = useCallback((event, {moduleId}) => {
 		const {
 			selectedIds
 		} = state.modules;
 
-		if (selectedIds.indexOf(moduleId) === -1) {
-			dispatch({
-				type: ACTION_DESELECT_ALL,
-			});
+		event.stopPropagation();
 
+		if (selectedIds.indexOf(moduleId) === -1) {
 			dispatch({
 				type: ACTION_SELECT_MODULE,
 				payload: {
@@ -225,11 +189,101 @@ const AppShell = () => {
 				},
 			});
 		}
+	}, [state]);
+
+	const modulePortMouseUpCallback = useCallback((event, {
+		portId,
+		canvasX,
+		canvasY,
+	}) => {
+		const [{
+			x: portX,
+			y: portY,
+			height: portHeight,
+		}] = event.target.getClientRects();
+
+		dispatch({
+			type: ACTION_ATTACH_POINT_TO_INPUT_PORT,
+			payload: {
+				portId,
+				portX,
+				portY,
+				portHeight,
+				canvasX,
+				canvasY,
+			},
+		});
+	}, [state]);
+
+	const modulePortMouseDownCallback = useCallback((event, {portId}) => {
 
 	}, [state]);
 
-	const onConnectPathMouseDown = useCallback((event, {pathId}) => {
+	const modulePortDragStartCallback = useCallback((event, {
+		portId,
+		canvasX,
+		canvasY,
+	}) => {
 		event.stopPropagation();
+
+		const {
+			mode,
+		} = state.ports.byId[portId];
+
+		if (mode === "in") {
+			return;
+		}
+
+		const {
+			offsetX,
+			offsetY,
+		} = state;
+
+		const {
+			x: portX,
+			y: portY,
+			width: portWidth,
+			height: portHeight,
+		} = event.target.getBoundingClientRect();
+
+		dispatch({
+			type: ACTION_CREATE_PATH,
+			payload: {
+				portId,
+				offsetX: portX - canvasX - offsetX + portWidth,
+				offsetY: portY - canvasY - offsetY + portHeight / 2,
+			},
+		});
+	}, [state]);
+
+	const modulePortDragMoveCallback = useCallback((event, {
+		portId,
+		canvasX,
+		canvasY,
+		movementX,
+		movementY,
+	}) => {
+		dispatch({
+			type: ACTION_MOVE_POINT_BY_PORT,
+			payload: {
+				portId,
+				canvasX,
+				canvasY,
+				movementX,
+				movementY,
+			},
+		});
+	}, [state]);
+
+	const modulePortDragEndCallback = useCallback(() => {
+		dispatch({
+			type: ACTION_REMOVE_PATH,
+		});
+	}, [state]);
+
+	const connectPathMouseDownCallback = useCallback((event, {pathId}) => {
+		event.stopPropagation();
+
 		dispatch({
 			type: ACTION_SELECT_PATH,
 			payload: {
@@ -238,8 +292,9 @@ const AppShell = () => {
 		});
 	}, []);
 
-	const onControlPointMouseDown = useCallback((event, {pointId}) => {
+	const controlPointMouseDownCallback = useCallback((event, {pointId}) => {
 		event.stopPropagation();
+
 		dispatch({
 			type: ACTION_SELECT_POINT,
 			payload: {
@@ -312,51 +367,55 @@ const AppShell = () => {
 			const {
 				[moduleId]: {
 					outputPortIds
-				}
+				},
 			} = state.modules.byId;
 
 			return outputPortIds.map((id, index) => callback(state.ports.byId[id], index));
 		};
 	}, [state]);
 
-	const onCanvasMouseDown = useCallback((event) => {
-		if (!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)) {
-			dispatch({
-				type: ACTION_DESELECT_ALL,
-			});
-		}
-	}, []);
-
 	return (
 		<div className={styles.hostNode}>
 			<AppHeader heading={heading}>
-				<AppToolBar onUndo={onUndo} onRedo={onRedo}/>
+				<AppToolBar onUndo={undoCallback} onRedo={redoCallback}/>
 			</AppHeader>
 			<div className={styles.contentNode}>
 				<AppToolBox
 					data={tools}
-					onItemDragStart={onToolItemDragStart}
+					onItemDragStart={toolItemDragStartCallback}
 				/>
 				<DiagramCanvas
+					scale={1}
+					width={state.width}
+					height={state.height}
+					offsetX={state.offsetX}
+					offsetY={state.offsetY}
+
 					pathMapper={pathMapper}
 					pathPointMapper={pathPointMapper}
 					pathControlPointMapper={pathControlPointMapper}
 					moduleMapper={moduleMapper}
 					inputPortMapper={inputPortMapper}
 					outputPortMapper={outputPortMapper}
-					width={state.width}
-					height={state.height}
-					offsetX={state.offsetX}
-					offsetY={state.offsetY}
-					scale={1}
-					dispatch={dispatch}
-					onDrop={onCanvasDrop}
-					onMoved={onCanvasMoved}
-					onMouseDown={onCanvasMouseDown}
-					onModuleMoved={onModuleMoved}
-					onModuleMouseDown={onModuleMouseDown}
-					onConnectPathMouseDown={onConnectPathMouseDown}
-					onControlPointMouseDown={onControlPointMouseDown}
+
+					onDrop={canvasDropCallback}
+					onDragMove={canvasDragMoveCallback}
+					onMouseDown={canvasMouseDownCallback}
+
+					onModuleMouseDown={moduleMouseDownCallback}
+					onModuleDragStart={moduleDragStartCallback}
+					onModuleDragMove={moduleDragMoveCallback}
+					onModuleDragEnd={moduleDragEndCallback}
+
+					onModulePortMouseUp={modulePortMouseUpCallback}
+					onModulePortMouseDown={modulePortMouseDownCallback}
+
+					onModulePortDragStart={modulePortDragStartCallback}
+					onModulePortDragMove={modulePortDragMoveCallback}
+					onModulePortDragEnd={modulePortDragEndCallback}
+
+					onConnectPathMouseDown={connectPathMouseDownCallback}
+					onControlPointMouseDown={controlPointMouseDownCallback}
 				/>
 			</div>
 		</div>
